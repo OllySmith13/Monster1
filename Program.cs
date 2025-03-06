@@ -26,9 +26,10 @@ namespace CSPreALevelSkeleton
             private Trap Trap2 = new Trap();
             private Boolean TrainingGame;
 
-            public Game(Boolean IsATrainingGame)
+            public Game(Boolean IsATrainingGame,int Controlls)
             {
                 TrainingGame = IsATrainingGame;
+                Player.SetCsytem(Controlls);
                 SetUpGame();
                 Play();
             }
@@ -48,12 +49,13 @@ namespace CSPreALevelSkeleton
                 {
                     do
                     {
-                        DisplayMoveOptions();
+                        //DisplayMoveOptions();
                         MoveDirection = GetMove();
-                        ValidMove = CheckValidMove(MoveDirection);
+                        ValidMove = CheckValidMove(MoveDirection,Player.ReturnCsytem(),Player.GetPosition());
                     } while (!ValidMove);
                     if (MoveDirection != 'M')
                     {
+                        Console.Clear();
                         Cavern.PlaceItem(Player.GetPosition(), ' ');
                         Player.MakeMove(MoveDirection);
                         Cavern.PlaceItem(Player.GetPosition(), '*');
@@ -77,6 +79,7 @@ namespace CSPreALevelSkeleton
                             Count = 0;
                             do
                             {
+                                Console.Clear();
                                 Cavern.PlaceItem(Monster.GetPosition(), ' ');
                                 Position = Monster.GetPosition();
                                 Monster.MakeMove(Player.GetPosition());
@@ -88,9 +91,9 @@ namespace CSPreALevelSkeleton
                                 }
                                 Eaten = Monster.CheckIfSameCell(Player.GetPosition());
                                 Console.WriteLine();
-                                Console.WriteLine("Press Enter key to continue");
-                                Console.ReadLine();
+                                Console.WriteLine();
                                 Cavern.Display(Monster.GetAwake());
+                                Thread.Sleep(200);
                                 Count = Count + 1;
                             } while (Count != 2 && !Eaten);
                         }
@@ -116,7 +119,9 @@ namespace CSPreALevelSkeleton
             public char GetMove()
             {
                 char Move;
-                Move = char.Parse(Console.ReadLine());
+                Move = Console.ReadKey(intercept: true).KeyChar;
+                if(Convert.ToInt32(Move) > 90)
+                {Move = Convert.ToChar(Convert.ToInt32(Move) - 32);}
                 Console.WriteLine();
                 return Move;
             }
@@ -141,13 +146,24 @@ namespace CSPreALevelSkeleton
                 Console.WriteLine();
             }
 
-            public Boolean CheckValidMove(char Direction)
+            public Boolean CheckValidMove(char Direction, int cSystem,CellReference position)
             {
                 Boolean ValidMove;
-                ValidMove = true;
-                if (!(Direction == 'N' || Direction == 'S' || Direction == 'W' || Direction == 'E' || Direction == 'M'))
+                ValidMove = false;
+                if (cSystem == 1)
                 {
-                    ValidMove = false;
+                if ((Direction == 'N' && position.NoOfCellsSouth > 0) || (Direction == 'S' && position.NoOfCellsSouth < 4) || (Direction == 'W' && position.NoOfCellsEast > 0) || (Direction == 'E' && position.NoOfCellsEast < 6) || Direction == 'M')
+                    {
+                        ValidMove = true;
+                    }
+                
+                }
+                else
+                {
+                if ((Direction == 'W' && position.NoOfCellsSouth > 0) || (Direction == 'S' && position.NoOfCellsSouth < 4) || (Direction == 'A' && position.NoOfCellsEast > 0) || (Direction == 'D' && position.NoOfCellsEast < 6) || Direction == 'M')
+                    {
+                        ValidMove = true;
+                    }
                 }
                 return ValidMove;
             }
@@ -315,23 +331,53 @@ namespace CSPreALevelSkeleton
 
         class Character : Item
         {
+            private int CSystem = 0;
             public void MakeMove(char Direction)
             {
-                switch (Direction)
+                if (CSystem == 1)
                 {
-                    case 'N':
-                        NoOfCellsSouth = NoOfCellsSouth - 1;
-                        break;
-                    case 'S':
-                        NoOfCellsSouth = NoOfCellsSouth + 1;
-                        break;
-                    case 'W':
-                        NoOfCellsEast = NoOfCellsEast - 1;
-                        break;
-                    case 'E':
-                        NoOfCellsEast = NoOfCellsEast + 1;
-                        break;
+                    switch (Direction)
+                    {
+                        case 'N':
+                            NoOfCellsSouth = NoOfCellsSouth - 1;
+                            break;
+                        case 'S':
+                            NoOfCellsSouth = NoOfCellsSouth + 1;
+                            break;
+                        case 'W':
+                            NoOfCellsEast = NoOfCellsEast - 1;
+                            break;
+                        case 'E':
+                            NoOfCellsEast = NoOfCellsEast + 1;
+                            break;
+                    }
                 }
+                else
+                {
+                    switch (Direction)
+                    {
+                        case 'W':
+                            NoOfCellsSouth = NoOfCellsSouth - 1;
+                            break;
+                        case 'S':
+                            NoOfCellsSouth = NoOfCellsSouth + 1;
+                            break;
+                        case 'A':
+                            NoOfCellsEast = NoOfCellsEast - 1;
+                            break;
+                        case 'D':
+                            NoOfCellsEast = NoOfCellsEast + 1;
+                            break;
+                    }  
+                }
+            }
+            public void SetCsytem(int cSystem)
+            {
+                CSystem = cSystem;
+            }
+             public int ReturnCsytem()
+            {
+                return CSystem;
             }
         }
 
@@ -389,18 +435,26 @@ namespace CSPreALevelSkeleton
 
         static void Main(string[] args)
         {
-            int Choice = 0;
-            while (Choice != 9)
+            Console.Clear();
+            int controlls = 0;
+            char Choice = '1';
+            while (Choice != '9')
             {
                 DisplayMenu();
                 Choice = GetMainMenuChoice();
                 switch (Choice)
                 {
-                    case 1:
-                        Game NewGame = new Game(false);
+                    case '1':
+                        Game NewGame = new Game(false,controlls);
                         break;
-                    case 2:
-                        Game TrainingGame = new Game(true);
+                    case '2':
+                        Game TrainingGame = new Game(true,controlls);
+                        break;
+                    case '3':
+                        controlls = Controlls();
+                        break;
+                    default:
+                        Console.WriteLine("enter a number between 1 and 9");
                         break;
                 }
             }
@@ -412,17 +466,46 @@ namespace CSPreALevelSkeleton
             Console.WriteLine();
             Console.WriteLine("1. Start new game");
             Console.WriteLine("2. Play training game");
+            Console.WriteLine("3. Controlls");
             Console.WriteLine("9. Quit");
             Console.WriteLine();
             Console.Write("Please enter your choice: ");
         }
 
-        public static int GetMainMenuChoice()
+        public static char GetMainMenuChoice()
         {
-            int Choice;
-            Choice = int.Parse(Console.ReadLine());
+            char Choice;
+            Choice = Console.ReadKey(intercept: true).KeyChar;
             Console.WriteLine();
             return Choice;
+        }
+        public static int Controlls()
+        {
+            char Choice = '!';
+            Console.Clear();
+            Console.WriteLine("Controlls:");
+            Console.WriteLine("1:  N,E,S,W");
+            Console.WriteLine();
+            Console.WriteLine("     N     ");
+            Console.WriteLine("     ↑     ");
+            Console.WriteLine("W <--|--> E");
+            Console.WriteLine("     ↓     ");
+            Console.WriteLine("     S     ");
+            Console.WriteLine();
+            Console.WriteLine("2:  W,A,S,D");
+            Console.WriteLine();
+            Console.WriteLine("     W     ");
+            Console.WriteLine("     ↑     ");
+            Console.WriteLine("A <--|--> D");
+            Console.WriteLine("     ↓     ");
+            Console.WriteLine("     S     ");
+            while (!(Choice == '1' || Choice == '2'))
+            {
+            Console.WriteLine();
+            Console.WriteLine("Enter which controll system you want to use:");
+            Choice = Console.ReadKey(intercept: true).KeyChar;
+            }
+            return (int)char.GetNumericValue(Choice);
         }
     }
 }
