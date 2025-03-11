@@ -107,6 +107,7 @@ namespace CSPreALevelSkeleton
 
             public void DisplayMoveOptions()
             {
+                Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine();
                 Console.WriteLine("Enter N to move NORTH");
                 Console.WriteLine("Enter S to move SOUTH");
@@ -255,7 +256,14 @@ namespace CSPreALevelSkeleton
                     Console.WriteLine(" ------------- ");
                     for (Count2 = 0; Count2 <= WE; Count2++)
                     {
-                        if (CavernState[Count1, Count2] == ' ' || CavernState[Count1, Count2] == '*' || (CavernState[Count1, Count2] == 'M' && MonsterAwake))
+                        if (CavernState[Count1, Count2] == 'M' && MonsterAwake == true)
+                        {
+                            Console.Write("|");
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write(CavernState[Count1, Count2]);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        if (CavernState[Count1, Count2] == ' ' || CavernState[Count1, Count2] == '*')
                         {
                             Console.Write("|" + CavernState[Count1, Count2]);
                         }
