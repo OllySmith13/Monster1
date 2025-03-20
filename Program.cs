@@ -25,6 +25,8 @@ namespace CSPreALevelSkeleton
             private Trap Trap1 = new Trap();
             private Trap Trap2 = new Trap();
             private Boolean TrainingGame;
+            private Teleport Teleporter = new Teleport();
+            private Torch Torch = new Torch();
 
             public Game(Boolean IsATrainingGame,int Controlls)
             {
@@ -44,7 +46,7 @@ namespace CSPreALevelSkeleton
                 CellReference Position;
                 Eaten = false;
                 FlaskFound = false;
-                Cavern.Display(Monster.GetAwake());
+                Cavern.Display(Monster.GetAwake(),false);
                 do
                 {
                     do
@@ -52,14 +54,31 @@ namespace CSPreALevelSkeleton
                         //DisplayMoveOptions();
                         MoveDirection = GetMove();
                         ValidMove = CheckValidMove(MoveDirection,Player.ReturnCsytem(),Player.GetPosition());
+                    if (MoveDirection == 'T')
+                    {
+                        ValidMove = false;
+                        
+                    }
                     } while (!ValidMove);
+
                     if (MoveDirection != 'M')
                     {
                         Console.Clear();
                         Cavern.PlaceItem(Player.GetPosition(), ' ');
                         Player.MakeMove(MoveDirection);
                         Cavern.PlaceItem(Player.GetPosition(), '*');
-                        Cavern.Display(Monster.GetAwake());
+                        Torch.Charge();
+                        Torch.DisplayCharge();
+                        Cavern.Display(Monster.GetAwake(),false);
+                        if(Player.CheckIfSameCell(Teleporter.GetPosition()) && Teleporter.IsActive())
+                        {
+                            Teleporter.Deactivate();
+                            DisplayTeleportMessage();
+                            Cavern.PlaceItem(Player.GetPosition(), ' ');
+                            Player.SetPosition(GetNewRandomPosition());
+                            Cavern.PlaceItem(Player.GetPosition(), '*');
+                            Cavern.Display(Monster.GetAwake(),false);
+                        }
                         FlaskFound = Player.CheckIfSameCell(Flask.GetPosition());
                         if (FlaskFound)
                         {
@@ -72,7 +91,7 @@ namespace CSPreALevelSkeleton
                         {
                             Monster.ChangeSleepStatus();
                             DisplayTrapMessage();
-                            Cavern.Display(Monster.GetAwake());
+                            Cavern.Display(Monster.GetAwake(),false);
                         }
                         if (Monster.GetAwake() && !Eaten && !FlaskFound)
                         {
@@ -92,7 +111,7 @@ namespace CSPreALevelSkeleton
                                 Eaten = Monster.CheckIfSameCell(Player.GetPosition());
                                 Console.WriteLine();
                                 Console.WriteLine();
-                                Cavern.Display(Monster.GetAwake());
+                                Cavern.Display(Monster.GetAwake(),false);
                                 Thread.Sleep(200);
                                 Count = Count + 1;
                             } while (Count != 2 && !Eaten);
@@ -147,13 +166,18 @@ namespace CSPreALevelSkeleton
                 Console.WriteLine();
             }
 
+            public void DisplayTeleportMessage()
+            {
+                Console.WriteLine("You have activated a teleporter and have been transported to a random location.");
+                Console.WriteLine();
+            }
             public Boolean CheckValidMove(char Direction, int cSystem,CellReference position)
             {
                 Boolean ValidMove;
                 ValidMove = false;
                 if (cSystem == 1)
                 {
-                if ((Direction == 'N' && position.NoOfCellsSouth > 0) || (Direction == 'S' && position.NoOfCellsSouth < 4) || (Direction == 'W' && position.NoOfCellsEast > 0) || (Direction == 'E' && position.NoOfCellsEast < 6) || Direction == 'M')
+                if ((Direction == 'N' && position.NoOfCellsSouth > 0) || (Direction == 'S' && position.NoOfCellsSouth < 4) || (Direction == 'W' && position.NoOfCellsEast > 0) || (Direction == 'E' && position.NoOfCellsEast < 6) || Direction == 'M' || Direction == 'T')
                     {
                         ValidMove = true;
                     }
@@ -161,7 +185,7 @@ namespace CSPreALevelSkeleton
                 }
                 else
                 {
-                if ((Direction == 'W' && position.NoOfCellsSouth > 0) || (Direction == 'S' && position.NoOfCellsSouth < 4) || (Direction == 'A' && position.NoOfCellsEast > 0) || (Direction == 'D' && position.NoOfCellsEast < 6) || Direction == 'M')
+                if ((Direction == 'W' && position.NoOfCellsSouth > 0) || (Direction == 'S' && position.NoOfCellsSouth < 4) || (Direction == 'A' && position.NoOfCellsEast > 0) || (Direction == 'D' && position.NoOfCellsEast < 6) || Direction == 'M' || Direction == 'T')
                     {
                         ValidMove = true;
                     }
@@ -217,6 +241,10 @@ namespace CSPreALevelSkeleton
                     Position.NoOfCellsSouth = 1;
                     Flask.SetPosition(Position);
                     Cavern.PlaceItem(Position, 'F');
+                    Position.NoOfCellsEast = 1;
+                    Position.NoOfCellsSouth = 1;
+                    Teleporter.SetPosition(Position);
+                    Cavern.PlaceItem(Position, 'X');
                 }
             }
 
@@ -227,6 +255,59 @@ namespace CSPreALevelSkeleton
                 Position.NoOfCellsSouth = rnd.Next(0, NS + 1);
                 Position.NoOfCellsEast = rnd.Next(0, WE + 1);
                 return Position;
+            }
+        }
+        class Torch
+        {
+            int charge;
+            bool IsActive;
+            public Torch()
+            {
+                charge = 3;
+                IsActive = false;
+            }
+            public void Charge()
+            {
+                if (charge < 3)
+                {
+                charge++;
+                }
+            }
+            public void DisplayCharge()
+            {
+                Console.WriteLine("Torch: ");
+                Console.ForegroundColor = ConsoleColor.Red;
+                for(int i = 0; i < charge;i++)
+                {
+                    Console.Write("██");
+                }
+                Console.ForegroundColor = ConsoleColor.White;
+                for(int i = 0; i < 3-charge;i++)
+                {
+                    Console.Write("██");
+                }
+                Console.WriteLine();
+            }
+            public void UseTorch()
+            {
+                if (charge < 3)
+                {
+                     DisplayOutOfChargeMessage();
+                }
+                else
+                {
+                    charge = 0;
+                }
+            }
+            public void DisplayUsedMessage()
+            {
+                Console.WriteLine("You used the torch");
+                Console.WriteLine();
+            }
+            public void DisplayOutOfChargeMessage()
+            {
+                Console.WriteLine("You can't use the torch it has run out of power");
+                Console.WriteLine();
             }
         }
 
@@ -247,7 +328,7 @@ namespace CSPreALevelSkeleton
                 }
             }
 
-            public void Display(Boolean MonsterAwake)
+            public void Display(Boolean MonsterAwake,Boolean TorchUsed)
             {
                 int Count1;
                 int Count2;
@@ -514,6 +595,22 @@ namespace CSPreALevelSkeleton
             Choice = Console.ReadKey(intercept: true).KeyChar;
             }
             return (int)char.GetNumericValue(Choice);
+        }
+        class Teleport:Item
+        {
+            private bool active;
+            public Teleport()
+            {
+                active = true;
+            }
+            public void Deactivate()
+            {
+                active = false;
+            }
+            public bool IsActive()
+            {
+                return active;
+            }
         }
     }
 }
